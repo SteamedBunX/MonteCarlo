@@ -29,6 +29,7 @@ namespace MonteCarlo
         public App()
         {
             this.InitializeComponent();
+            
             this.Suspending += OnSuspending;
         }
 

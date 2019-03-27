@@ -6,9 +6,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-
-    <Grid>
-
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Height="480" Width="700">
+    <Grid HorizontalAlignment="Center" Height="480" Margin="0,0,0,0" VerticalAlignment="Center" Width="701">
+        <Image x:Name="picture" HorizontalAlignment="Left" Height="400" Margin="40,40,0,0" VerticalAlignment="Top" Width="400"/>
+        <TextBox x:Name="textBox_Input" HorizontalAlignment="Left" Margin="470,90,0,0" VerticalAlignment="Top" Width="130" InputScope="Digits" BeforeTextChanging="TextBox_Input_BeforeTextChanging" TextChanged="TextBox_Input_TextChanged" Text=""/>
+        <TextBlock x:Name="textBlock_Instruction" HorizontalAlignment="Left" Margin="470,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="179" Height="41"><Run Text="Please Enter  the number of points you want to generate:"/><LineBreak/><Run/></TextBlock>
+        <TextBlock x:Name="textBlock_Warning" HorizontalAlignment="Left" Margin="470,144,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Height="50" Width="180" Foreground="Red"/>
+        <Button x:Name="button_Generate" Content="Generate" HorizontalAlignment="Left" Margin="470,210,0,0" VerticalAlignment="Top" Width="130"/>
+        <TextBlock x:Name="textBlock_Result" HorizontalAlignment="Left" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Height="170" Width="180" Margin="470,270,0,40"/>
     </Grid>
 </Page>
