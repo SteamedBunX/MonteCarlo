@@ -13,6 +13,12 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.System;
+using System.Diagnostics;
+using Windows.UI.ViewManagement;
+using System.Runtime.InteropServices;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.UI;
+using System.Threading.Tasks;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -25,65 +31,172 @@ namespace MonteCarlo
     {
         Point originPoint = new Point(0, 0);
         Random r = new Random();
+        int defaultSeed;
+        WriteableBitmap visualized;
 
         public MainPage()
         {
             this.InitializeComponent();
+            ApplicationView.PreferredLaunchViewSize = new Size(800, 480);
+            ApplicationView.PreferredLaunchWindowingMode = ApplicationViewWindowingMode.PreferredLaunchViewSize;
             textBox_Input.Text = RandomInt().ToString();
+            defaultSeed = r.Next();
+            r = new Random(defaultSeed);
+            textBox_RandomSeed.PlaceholderText = $"{defaultSeed}";
         }
 
-
-
-        bool WithinCircle(Point spot)
+        private async void Button_Generate_Click(object sender, RoutedEventArgs e)
         {
-            return spot - originPoint < 1;
+            await GenerateNewResult();
         }
 
-        private void TextBox_Input_TextChanged(object sender, TextChangedEventArgs e)
+        private async Task GenerateNewResult()
         {
-            if (IsNumber(textBox_Input.Text) && !int.TryParse(textBox_Input.Text, out _))
-            {
-                textBox_Input.Text = int.MaxValue.ToString();
-                textBlock_Warning.Text = $"The number cannot be greater than {int.MaxValue}";
-            }
-        }
+            // Arrenge display
+            button_Generate.IsEnabled = false;
+            progressBar.Opacity = 1;
+            progressBar.Value = 0;
+            picture_result.Source = null;
+            textBlock_Result.Text = "";
 
-        private int RandomInt()
-        {
-            return r.Next(1,int.MaxValue);
-        }
-
-        private void TextBox_Input_BeforeTextChanging(TextBox sender, TextBoxBeforeTextChangingEventArgs args)
-        {
+            // Start the process
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            int amount = int.Parse(textBox_Input.Text);
+            int inside = 0;
+            int outside = 0;
             
-            if (textBlock_Result != null)
+            //Set the random seed
+            if(string.IsNullOrEmpty(textBox_RandomSeed.Text))
             {
-                textBlock_Warning.Text = "";
-                var text = args.NewText;
-                int result = 0;
-                if (!int.TryParse(text, out result))
+                r = new Random(defaultSeed);
+            }else
+            {
+                r = new Random(int.Parse(textBox_RandomSeed.Text));
+            }
+
+            // Calculation for the result
+            var progressIndicator = new Progress<int>(ReportProgress);
+            int[,] dots = await Task.Run(() => GenerateDots(amount, ref inside, progressIndicator));
+            outside = amount - inside;
+
+            // Print Result
+            textBlock_Result.Text = GenerateResult(amount, inside, outside);
+
+            // Visualize result
+            visualized = VisualizeResult(dots);
+
+            // Make progress bar invisible
+            progressBar.Opacity = 0;
+
+            // Display Image
+            picture_result.Source = visualized;
+            picture_result.InvalidateMeasure();
+
+            // Print Timer
+            stopWatch.Stop();
+            long totalTime = stopWatch.ElapsedMilliseconds;
+            long second = totalTime / 1000;
+            long millisecond = totalTime % 1000;
+            textBlock_Result.Text += $"\nTotal Time Elapsed : {second}s {millisecond}ms ";
+            button_Generate.IsEnabled = true;
+        }
+
+        private int[,] GenerateDots(int amount, ref int inside, IProgress<int> progress)
+        {
+            int showProgress = 0;
+            int[,] dots = new int[400, 400];
+            for (int i = 0; i < amount; i++)
+            {
+                Point dot = GenerateDot();
+                if (dot - originPoint <= 1)
                 {
-                    args.Cancel = true;
-                    
-                    if (IsNumber(text))
+                    inside++;
+                }
+                dots[(int)(dot.GetX() * 400), (int)(dot.GetY() * 400)]++;
+                int liveProgress = (int)(i / (double)amount * 100);
+                if (showProgress < liveProgress)
+                {
+                    showProgress = liveProgress;
+                    progress.Report(showProgress);
+                }
+            }
+
+            return dots;
+        }
+
+        void ReportProgress(int value)
+        {
+            progressBar.Value = value;
+        }
+
+        WriteableBitmap VisualizeResult(int[,] dots)
+        {
+            WriteableBitmap result = new WriteableBitmap(400, 400);
+            int maxValue = 0;
+            int minValue = int.MaxValue;
+            foreach (int value in dots)
+            {
+                if (value > maxValue)
+                {
+                    maxValue = value;
+                }
+                if (value < minValue)
+                {
+                    minValue = value;
+                }
+            }
+            WriteableBitmap writeableBmp = BitmapFactory.New(400, 400);
+            using (writeableBmp.GetBitmapContext())
+            {
+                for (int x = 0; x < 400; x++)
+                {
+                    for (int y = 0; y < 400; y++)
                     {
-                        args.Cancel = false;
+                        double brightness = 1 - (double)(dots[x, y] - minValue) / (maxValue - minValue);
+                        brightness = brightness < 0 ? (byte)0.0 : brightness;
+                        if (new Point(x / 400.0, y / 400.0) - originPoint < 1)
+                        {
+                            writeableBmp.SetPixel(x, y, (byte)(brightness * 255), (byte)(brightness * 255), 255);
+                        }
+                        else
+                        {
+                            writeableBmp.SetPixel(x, y, 255, (byte)(165 + (brightness * 90)), (byte)(brightness * 255));
+                        }
                     }
                 }
-                else if (result < 0)
-                {
-                    args.Cancel = true;
-                }
-                else if (StartWithZero(text))
-                {
-                    args.Cancel = true;
-                }
             }
-
+            return writeableBmp;
         }
 
-        private bool IsNumber(string input)
+        string GenerateResult(int amount, int inside, int outside)
         {
+            string result = "";
+            double estimatedPI = (double)inside * 4 / amount;
+            double difference = Math.Abs(estimatedPI - Math.PI);
+            result += $"Total points generated : {amount}\n";
+            result += $"Total points landed inside the fan : {inside}\n";
+            result += $"Total points landed outside the fan : {outside}\n";
+            result += $"Estimated value of PI : {estimatedPI: 0.0000000}\n";
+            result += $"PI Actuall : {Math.PI: 0.0000000}\n";
+            result += $"Difference : {difference: #.####E+0}\n";
+            result += $"Difference in % : {difference / Math.PI: 0.0000%}";
+            return result;
+        }
+
+        Point GenerateDot()
+        {
+            return new Point(r.NextDouble(), r.NextDouble());
+        }
+
+        int RandomInt()
+        {
+            return r.Next(1, int.MaxValue);
+        }
+
+        bool IsNumber(string input)
+        {
+
             foreach (char c in input.ToCharArray())
             {
                 if (c < '0' || c > '9')
@@ -94,11 +207,71 @@ namespace MonteCarlo
             return true;
         }
 
-        private bool StartWithZero(string input)
+        bool WithinCircle(Point spot)
+        {
+            return spot - originPoint < 1;
+        }
+
+        bool StartWithZero(string input)
         {
             return input[0] == '0';
         }
+
+        void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox.Text == string.Empty)
+            {
+                textBox.Text = "0";
+            }
+            else if (IsNumber(textBox.Text) && !int.TryParse(textBox.Text, out _))
+            {
+                textBox.Text = int.MaxValue.ToString();
+                textBlock_Warning.Text = $"The number cannot be greater than {int.MaxValue}";
+            }
+        }
+
+        void TextBox_BeforeTextChanging(TextBox sender, TextBoxBeforeTextChangingEventArgs args)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBlock_Result != null)
+            {
+                textBlock_Warning.Text = "";
+                var text = args.NewText;
+                int result = 0;
+                if (text.Contains(" ") || text.Contains("\n"))
+                {
+                    args.Cancel = true;
+                    textBlock_Warning.Text = "Please Only Enter Numbers";
+                }
+                else if (!int.TryParse(text, out result))
+                {
+                    if (!IsNumber(text))
+                    {
+                        args.Cancel = true;
+                        textBlock_Warning.Text = "Please Only Enter Numbers";
+                    }
+                }
+                else if (result < 0)
+                {
+                    textBlock_Warning.Text = "Input Cannot Be Negative";
+                    args.Cancel = true;
+                }
+                else if (text == "0")
+                {
+
+                }
+                else if (StartWithZero(text))
+                {
+                    textBlock_Warning.Text = "Number Cannot Start With 0";
+                    args.Cancel = true;
+                }
+            }
+
+        }
     }
+
+
 
     struct Point
     {
@@ -130,9 +303,7 @@ namespace MonteCarlo
             {
                 return false;
             }
-            return (Math.Abs(point2.x - this.x) < -.0001 && Math.Abs(point2.y - this.y) < -.0001);
-
-
+            return (Math.Abs(point2.x - this.x) < .0001 && Math.Abs(point2.y - this.y) < .0001);
         }
 
         public override int GetHashCode()

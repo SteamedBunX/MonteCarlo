@@ -6,13 +6,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Height="480" Width="700">
-    <Grid HorizontalAlignment="Center" Height="480" Margin="0,0,0,0" VerticalAlignment="Center" Width="701">
-        <Image x:Name="picture" HorizontalAlignment="Left" Height="400" Margin="40,40,0,0" VerticalAlignment="Top" Width="400"/>
-        <TextBox x:Name="textBox_Input" HorizontalAlignment="Left" Margin="470,90,0,0" VerticalAlignment="Top" Width="130" InputScope="Digits" BeforeTextChanging="TextBox_Input_BeforeTextChanging" TextChanged="TextBox_Input_TextChanged" Text=""/>
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Height="480" Width="800">
+    <Grid HorizontalAlignment="Center" Height="480" Margin="0,0,0,0" VerticalAlignment="Center" Width="800">
+        <Border BorderBrush="Black" HorizontalAlignment="Left" Height="402" Margin="39,39,0,0" VerticalAlignment="Top" Width="402" BorderThickness="1,1,1,1">
+            <Image x:Name="picture_result" HorizontalAlignment="Left" Height="400" Margin="1,1,1,1" VerticalAlignment="Top" Width="400" IsDoubleTapEnabled="False" IsHoldingEnabled="False" IsRightTapEnabled="False" IsTapEnabled="False"/>
+        </Border>
+        <TextBox x:Name="textBox_Input" HorizontalAlignment="Left" Margin="470,90,0,0" VerticalAlignment="Top" Width="130" InputScope="Digits" BeforeTextChanging="TextBox_BeforeTextChanging" TextChanged="TextBox_TextChanged" Text=""/>
         <TextBlock x:Name="textBlock_Instruction" HorizontalAlignment="Left" Margin="470,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="179" Height="41"><Run Text="Please Enter  the number of points you want to generate:"/><LineBreak/><Run/></TextBlock>
         <TextBlock x:Name="textBlock_Warning" HorizontalAlignment="Left" Margin="470,144,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Height="50" Width="180" Foreground="Red"/>
-        <Button x:Name="button_Generate" Content="Generate" HorizontalAlignment="Left" Margin="470,210,0,0" VerticalAlignment="Top" Width="130"/>
-        <TextBlock x:Name="textBlock_Result" HorizontalAlignment="Left" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Height="170" Width="180" Margin="470,270,0,40"/>
+        <Button x:Name="button_Generate" Content="Generate" HorizontalAlignment="Left" Margin="470,210,0,0" VerticalAlignment="Top" Width="130" Click="Button_Generate_Click"/>
+        <TextBlock x:Name="textBlock_Result" HorizontalAlignment="Left" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Height="170" Width="280" Margin="470,270,0,40"/>
+        <ProgressBar x:Name="progressBar" HorizontalAlignment="Left" Height="19" Margin="39,207,0,0" VerticalAlignment="Top" Width="402" Background="#33FFFFFF"/>
+        <TextBlock HorizontalAlignment="Left" Margin="661,40,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="17"><Run Text="RandomSeed:"/><LineBreak/><Run/></TextBlock>
+        <TextBox x:Name="textBox_RandomSeed" HorizontalAlignment="Left" Margin="661,90,0,0" Text="" VerticalAlignment="Top" Width="130" InputScope="Digits" PlaceholderText="" TextChanged="TextBox_TextChanged" BeforeTextChanging="TextBox_BeforeTextChanging"/>
+
     </Grid>
 </Page>
