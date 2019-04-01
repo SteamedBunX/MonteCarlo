@@ -3,7 +3,6 @@
 ## Introduction
 1. This is my FIRST TIME using UWP. There has been a lot of change since WFP, the two specific ones i encountered are the eventhandling for user input and Bitmap class as a whole. I used WriteableBitmapEX To manipulate bitmap in this application.  
 2. This is also my FIRST TIME dealing with async operation. Along with setting up UI update during an Async operation.  
-3. I completely forgot about commiting once i start to learn Async.  
   
   ![ExampleImage](https://github.com/SteamedBunX/MonteCarlo/blob/master/4.PNG)
   
